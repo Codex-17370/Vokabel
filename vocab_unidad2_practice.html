@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Vokabeltrainer — Unidad 2 & 2B</title>
+<style>
+  body{font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;margin:0;background:#f7f7fb;color:#222}
+  header{background:#3b82f6;color:white;padding:18px 20px}
+  .wrap{max-width:900px;margin:20px auto;padding:18px;background:white;border-radius:8px;box-shadow:0 6px 20px rgba(20,20,50,0.06)}
+  h1{margin:0;font-size:20px}
+  nav{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+  button.tab{background:#eef6ff;border:1px solid #d0e6ff;padding:8px 12px;border-radius:6px;cursor:pointer}
+  button.tab.active{background:#1e40af;color:white;border-color:#1e40af}
+  .content{margin-top:18px}
+  .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .big{font-size:18px}
+  .card{height:140px;display:flex;align-items:center;justify-content:center;font-size:28px;border-radius:8px;border:1px dashed #cbd5e1;background:linear-gradient(180deg,#fff,#fbfdff);margin-bottom:12px}
+  .row{display:flex;gap:8px;flex-wrap:wrap}
+  input[type="text"]{padding:8px;border-radius:6px;border:1px solid #cbd5e1;width:220px}
+  select{padding:8px;border-radius:6px;border:1px solid #cbd5e1}
+  .result{padding:10px;margin-top:12px;border-radius:6px}
+  .good{background:#ecffef;border:1px solid #b7f0c6}
+  .bad{background:#fff0f0;border:1px solid #ffbdbd}
+  ul.wordlist{columns:2;list-style:none;padding:0;margin:0}
+  li{padding:4px 0}
+  footer{font-size:13px;color:#666;margin-top:12px;text-align:center}
+  .small{font-size:13px;color:#444}
+</style>
+</head>
+<body>
+<header>
+  <div style="max-width:1100px;margin:0 auto;display:flex;justify-content:space-between;align-items:center">
+    <div>
+      <h1>Vokabeltrainer — Unidad 2 &amp; 2B</h1>
+      <div class="small">Spanisch ↔ Deutsch — Übe nur die Wörter für deinen Test</div>
+    </div>
+    <div class="small">Offline-fähig · Single-file</div>
+  </div>
+</header>
+
+<main class="wrap" id="app">
+  <nav id="tabs">
+    <button class="tab active" data-mode="flash">Karteikarten</button>
+    <button class="tab" data-mode="quiz">Multiple-Choice</button>
+    <button class="tab" data-mode="type">Tippen</button>
+    <button class="tab" data-mode="list">Wortliste</button>
+  </nav>
+
+  <div class="content">
+    <!-- Controls -->
+    <div class="controls">
+      <label>Richtung: <select id="dir"><option value="es-de">Spanisch → Deutsch</option><option value="de-es">Deutsch → Spanisch</option></select></label>
+      <label>Sammlung: <select id="collection"><option value="all">Unidad 2 + 2B (alle)</option></select></label>
+      <button id="start" class="tab">Neu mischen / Start</button>
+      <div style="margin-left:auto" id="stats" class="small">Gelernt: 0 / 0</div>
+    </div>
+
+    <!-- Flashcards -->
+    <div id="mode-flash" class="mode">
+      <div class="card" id="card">Klicke "Neu mischen / Start"</div>
+      <div class="row">
+        <button id="flip" class="tab">Umdrehen</button>
+        <button id="next" class="tab">Nächstes</button>
+        <button id="known" class="tab">Wissen</button>
+        <button id="unknown" class="tab">Nochmal</button>
+      </div>
+    </div>
+
+    <!-- Quiz -->
+    <div id="mode-quiz" class="mode" style="display:none">
+      <div id="quiz-question" class="card big">Frage</div>
+      <div id="quiz-answers" class="row"></div>
+      <div id="quiz-info" class="small" style="margin-top:8px"></div>
+    </div>
+
+    <!-- Type -->
+    <div id="mode-type" class="mode" style="display:none">
+      <div id="type-prompt" class="card big">Prompt</div>
+      <div class="row" style="align-items:center">
+        <input id="type-input" type="text" placeholder="Schreibe hier die Übersetzung...">
+        <button id="type-check" class="tab">Prüfen</button>
+        <button id="type-skip" class="tab">Überspringen</button>
+      </div>
+      <div id="type-result" class="result" style="display:none"></div>
+    </div>
+
+    <!-- List -->
+    <div id="mode-list" class="mode" style="display:none">
+      <h3>Wortliste — Unidad 2 &amp; 2B</h3>
+      <ul id="wordlist" class="wordlist"></ul>
+    </div>
+
+    <footer>
+      <div>Erstellt: interaktives Single-File. Du kannst die Datei speichern und offline verwenden.</div>
+      <div style="margin-top:6px">Wenn du neue Wörter möchtest, füge sie oben in die <em>vocabulary</em>-Variable ein.</div>
+    </footer>
+  </div>
+</main>
+
+<script>
+// --- Vokabeln: Spanisch — Deutsch (Artikel enthalten bei Substantiven) ---
+const vocabulary = [
+  {es:"el encuentro",de:"das Treffen"},
+  {es:"el colegio",de:"die Schule"},
+  {es:"el curso",de:"der Kurs"},
+  {es:"el/la estudiante",de:"der/die Studierende"},
+  {es:"el aula",de:"das Klassenzimmer"},
+  {es:"la cafetería",de:"die Cafeteria"},
+  {es:"el libro",de:"das Buch"},
+  {es:"el cuaderno",de:"das Heft"},
+  {es:"el bolígrafo",de:"der Kugelschreiber"},
+  {es:"el lápiz",de:"der Bleistift"},
+  {es:"la mesa",de:"der Tisch"},
+  {es:"la silla",de:"der Stuhl"},
+  {es:"el móvil",de:"das Handy"},
+  {es:"el ordenador",de:"der Computer"},
+  {es:"la pantalla",de:"der Bildschirm"},
+  {es:"el teclado",de:"die Tastatur"},
+  {es:"el ratón",de:"die Maus"},
+  {es:"la papelera",de:"der Papierkorb"},
+  {es:"la mochila",de:"der Rucksack"},
+  {es:"la ventana",de:"das Fenster"},
+  {es:"la puerta",de:"die Tür"},
+  {es:"el profesor",de:"der Lehrer"},
+  {es:"la profesora",de:"die Lehrerin"},
+  {es:"el médico",de:"der Arzt"},
+  {es:"la médica",de:"die Ärztin"},
+  {es:"el camarero",de:"der Kellner"},
+  {es:"la camarera",de:"die Kellnerin"},
+  {es:"el dependiente",de:"der Verkäufer"},
+  {es:"la dependienta",de:"die Verkäuferin"},
+  {es:"el jefe",de:"der Chef"},
+  {es:"la jefa",de:"die Chefin"},
+  {es:"el/la recepcionista",de:"der/die Rezeptionist/in"},
+  {es:"¿Qué haces?",de:"Was machst du?"},
+  {es:"Trabajo en…",de:"Ich arbeite in…"},
+  {es:"Estudio…",de:"Ich studiere…"},
+  {es:"¿Dónde trabajas?",de:"Wo arbeitest du?"},
+  {es:"¿Dónde estudias?",de:"Wo studierst du?"},
+  {es:"Trabajo de…",de:"Ich arbeite als…"},
+  {es:"Soy…",de:"Ich bin…"},
+  {es:"¿Cuántas lenguas hablas?",de:"Wie viele Sprachen sprichst du?"},
+  {es:"Hablo…",de:"Ich spreche…"}
+];
+
+// state
+let deck = [];
+let index = 0;
+let known = new Set();
+let dir = 'es-de';
+
+// DOM
+const tabButtons = document.querySelectorAll('button.tab');
+const modes = document.querySelectorAll('.mode');
+const cardEl = document.getElementById('card');
+const flipBtn = document.getElementById('flip');
+const nextBtn = document.getElementById('next');
+const knownBtn = document.getElementById('known');
+const unknownBtn = document.getElementById('unknown');
+const startBtn = document.getElementById('start');
+const statsEl = document.getElementById('stats');
+const dirSel = document.getElementById('dir');
+const wordlistEl = document.getElementById('wordlist');
+
+// quiz elements
+const quizQuestion = document.getElementById('quiz-question');
+const quizAnswers = document.getElementById('quiz-answers');
+const quizInfo = document.getElementById('quiz-info');
+
+// type elements
+const typePrompt = document.getElementById('type-prompt');
+const typeInput = document.getElementById('type-input');
+const typeCheck = document.getElementById('type-check');
+const typeSkip = document.getElementById('type-skip');
+const typeResult = document.getElementById('type-result');
+
+// init wordlist
+function renderWordlist(){
+  wordlistEl.innerHTML = '';
+  vocabulary.forEach(v=>{
+    const li = document.createElement('li');
+    li.textContent = v.es + " — " + v.de;
+    wordlistEl.appendChild(li);
+  });
+}
+renderWordlist();
+
+// tabs
+tabButtons.forEach(b=>b.addEventListener('click', ()=>{
+  tabButtons.forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');
+  const m = b.dataset.mode;
+  modes.forEach(md=>md.style.display = md.id === 'mode-'+m ? '' : 'none');
+}));
+
+// utils
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]] } return a; }
+function updateStats(){ statsEl.textContent = `Gelernt: ${known.size} / ${deck.length}`; }
+
+// start / shuffle
+startBtn.addEventListener('click', ()=>{
+  dir = dirSel.value;
+  deck = shuffle(vocabulary.slice());
+  index = 0;
+  known = new Set();
+  updateStats();
+  showCard();
+  prepareQuiz();
+  prepareType();
+});
+
+// flashcard functions
+function showCard(){
+  if(deck.length===0){ cardEl.textContent = 'Keine Wörter geladen.'; return; }
+  const item = deck[index];
+  cardEl.dataset.es = item.es;
+  cardEl.dataset.de = item.de;
+  cardEl.textContent = dir === 'es-de' ? item.es : item.de;
+  cardEl.dataset.side = dir === 'es-de' ? 'front-es' : 'front-de';
+  updateStats();
+}
+flipBtn.addEventListener('click', ()=>{
+  const side = cardEl.dataset.side;
+  if(!cardEl.dataset.es) return;
+  if(side === 'front-es'){ cardEl.textContent = cardEl.dataset.de; cardEl.dataset.side = 'back-de' }
+  else if(side === 'front-de'){ cardEl.textContent = cardEl.dataset.es; cardEl.dataset.side = 'back-es' }
+  else { // if already back, flip to front
+    cardEl.textContent = dir === 'es-de' ? cardEl.dataset.es : cardEl.dataset.de;
+    cardEl.dataset.side = dir === 'es-de' ? 'front-es' : 'front-de';
+  }
+});
+nextBtn.addEventListener('click', ()=>{ index = (index+1) % deck.length; showCard(); });
+knownBtn.addEventListener('click', ()=>{ known.add(deck[index].es); index = (index+1) % deck.length; showCard(); });
+unknownBtn.addEventListener('click', ()=>{ known.delete(deck[index].es); index = (index+1) % deck.length; showCard(); });
+
+// Quiz: multiple choice
+function prepareQuiz(){
+  // no-op for now
+}
+function startQuizRound(){
+  quizAnswers.innerHTML = '';
+  const i = Math.floor(Math.random()*deck.length);
+  const item = deck[i];
+  if(dir === 'es-de'){ quizQuestion.textContent = item.es; const correct = item.de;
+    // pick 3 distractors
+    const choices = [correct];
+    while(choices.length<4){ const cand = deck[Math.floor(Math.random()*deck.length)].de; if(!choices.includes(cand)) choices.push(cand); }
+    shuffle(choices);
+    choices.forEach(c=>{
+      const b = document.createElement('button');
+      b.className = 'tab';
+      b.textContent = c;
+      b.addEventListener('click', ()=>{
+        if(c===correct){ quizInfo.textContent = 'Richtig! ✅'; quizInfo.className='small good' } else { quizInfo.textContent = 'Falsch — richtig wäre: ' + correct; quizInfo.className='small bad' }
+        setTimeout(()=>{ quizInfo.textContent=''; startQuizRound(); }, 900);
+      });
+      quizAnswers.appendChild(b);
+    });
+  } else {
+    quizQuestion.textContent = item.de;
+    const correct = item.es;
+    const choices = [correct];
+    while(choices.length<4){ const cand = deck[Math.floor(Math.random()*deck.length)].es; if(!choices.includes(cand)) choices.push(cand); }
+    shuffle(choices);
+    choices.forEach(c=>{
+      const b = document.createElement('button');
+      b.className = 'tab';
+      b.textContent = c;
+      b.addEventListener('click', ()=>{
+        if(c===correct){ quizInfo.textContent = 'Richtig! ✅'; quizInfo.className='small good' } else { quizInfo.textContent = 'Falsch — richtig wäre: ' + correct; quizInfo.className='small bad' }
+        setTimeout(()=>{ quizInfo.textContent=''; startQuizRound(); }, 900);
+      });
+      quizAnswers.appendChild(b);
+    });
+  }
+}
+
+document.querySelector('button[data-mode="quiz"]').addEventListener('click', ()=>{
+  if(deck.length===0) { startBtn.click(); }
+  startQuizRound();
+});
+
+// Type mode
+function prepareType(){
+  // set first prompt
+  if(deck.length===0) return;
+  const i = Math.floor(Math.random()*deck.length);
+  const item = deck[i];
+  typePrompt.dataset.es = item.es;
+  typePrompt.dataset.de = item.de;
+  typePrompt.textContent = dir === 'es-de' ? item.es : item.de;
+  typeInput.value='';
+  typeResult.style.display='none';
+}
+document.querySelector('button[data-mode="type"]').addEventListener('click', ()=>{
+  if(deck.length===0) startBtn.click();
+  prepareType();
+});
+typeCheck.addEventListener('click', ()=>{
+  const user = typeInput.value.trim().toLowerCase();
+  const correct = (dir==='es-de' ? typePrompt.dataset.de : typePrompt.dataset.es).toLowerCase();
+  if(!user){ typeResult.style.display='block'; typeResult.className='result bad'; typeResult.textContent='Bitte eine Antwort eingeben.'; return; }
+  if(user === correct){ typeResult.style.display='block'; typeResult.className='result good'; typeResult.textContent='Richtig! ✅ — ' + correct; known.add(typePrompt.dataset.es); updateStats(); setTimeout(()=>{ prepareType(); },800); }
+  else {
+    typeResult.style.display='block'; typeResult.className='result bad'; typeResult.textContent='Fast — richtig: ' + correct;
+    setTimeout(()=>{ prepareType(); },1200);
+  }
+});
+typeSkip.addEventListener('click', ()=>{ prepareType(); });
+
+// initial load: set deck but wait for user to press Start
+deck = vocabulary.slice();
+updateStats();
+
+// double-click card to flip quickly
+cardEl.addEventListener('dblclick', ()=>flipBtn.click());
+
+</script>
+</body>
+</html>
